@@ -1,0 +1,106 @@
+<?php
+// Vérifier si le formulaire a été soumis
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Récupérer les données du formulaire
+    $nom = isset($_POST['nom']) ? $_POST['nom'] : '';
+    $prenom = isset($_POST['prenom']) ? $_POST['prenom'] : '';
+    $adresse_bureau = isset($_POST['adresse_bureau']) ? $_POST['adresse_bureau'] : '';
+    $telephone = isset($_POST['telephone']) ? $_POST['telephone'] : '';
+    $id = isset($_POST['id']) ? $_POST['id'] : '';
+    $mail = isset($_POST['mail']) ? $_POST['mail'] : '';
+    $mot_de_passe = isset($_POST['mot_de_passe']) ? $_POST['mot_de_passe'] : '';
+    $agent_id = $id; // Assure que l'agent_id est correct
+    $category_id = isset($_POST['category_id']) ? $_POST['category_id'] : '';
+
+    // Traitement des fichiers uploadés (CV et photo)
+    $cv = '';
+    $photo = '';
+
+    if (isset($_FILES['cv']) && $_FILES['cv']['error'] == UPLOAD_ERR_OK) {
+        $tmpName = $_FILES['cv']['tmp_name'];
+        $name = basename($_FILES['cv']['name']);
+        $targetDir = "upload/";
+        $cv = $targetDir . $name;
+
+        if (!move_uploaded_file($tmpName, $cv)) {
+            echo "Erreur lors du téléchargement du CV.";
+            exit;
+        }
+    }
+
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] == UPLOAD_ERR_OK) {
+        $tmpName = $_FILES['photo']['tmp_name'];
+        $name = basename($_FILES['photo']['name']);
+        $targetDir = "upload/";
+        $photo = $targetDir . $name;
+
+        if (!move_uploaded_file($tmpName, $photo)) {
+            echo "Erreur lors du téléchargement de la photo.";
+            exit;
+        }
+    }
+
+    // Connexion à la base de données
+    $host = 'localhost';
+    $dbname = 'projet';
+    $username = 'quentin';
+    $password = 'fries';
+
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    } catch (PDOException $e) {
+        die("Erreur de connexion à la base de données: " . $e->getMessage());
+    }
+    
+    $mot_de_passe = password_hash($mot_de_passe, PASSWORD_DEFAULT);
+
+    // Requête SQL pour insérer les données dans la table agent
+    $queryAgent = "INSERT INTO agent (nom, prenom, adresse_bureau, telephone, cv, photo, id, mail, mot_de_passe) 
+              VALUES (:nom, :prenom, :adresse_bureau, :telephone, :cv, :photo, :id, :mail, :mot_de_passe)";
+
+    try {
+        $stmtAgent = $pdo->prepare($queryAgent);
+        $stmtAgent->bindParam(':nom', $nom);
+        $stmtAgent->bindParam(':prenom', $prenom);
+        $stmtAgent->bindParam(':adresse_bureau', $adresse_bureau);
+        $stmtAgent->bindParam(':telephone', $telephone);
+        $stmtAgent->bindParam(':id', $id);
+        $stmtAgent->bindParam(':cv', $cv);
+        $stmtAgent->bindParam(':photo', $photo);
+        $stmtAgent->bindParam(':mail', $mail);
+        $stmtAgent->bindParam(':mot_de_passe', $mot_de_passe);
+        $stmtAgent->execute();
+        echo "Agent ajouté avec succès.";
+
+        // Récupérer l'ID de l'agent nouvellement inséré
+        $agent_id = $pdo->lastInsertId();
+
+        // Requête SQL pour insérer les données dans la table agents_categories
+        $queryAgentsCategories = "INSERT INTO agents_categories (agent_id, category_id) 
+                                  VALUES (:agent_id, :category_id)";
+        $stmtAgentsCategories = $pdo->prepare($queryAgentsCategories);
+        $stmtAgentsCategories->bindParam(':agent_id', $agent_id);
+        $stmtAgentsCategories->bindParam(':category_id', $category_id);
+        $stmtAgentsCategories->execute();
+        echo "Catégorie d'agent ajoutée avec succès.";
+
+        // Requête SQL pour insérer les données dans la table profil
+        $queryProfil = "INSERT INTO profil (nom, prenom, mail, mot_de_passe, is_admin, `adresse 1`, `adresse 2`, ville, `code postal`, `type de payement`, `numero de carte`, `nom affiche`, `date d'expiration`, `code de securite`, pays) 
+                        VALUES (:nom, :prenom, :mail, :mot_de_passe, 3, 1, 1, 3, 1, 1, 3, 1, 1, 1, 1)";
+        $stmtProfil = $pdo->prepare($queryProfil);
+        $stmtProfil->bindParam(':nom', $nom);
+        $stmtProfil->bindParam(':prenom', $prenom);
+        $stmtProfil->bindParam(':mail', $mail);
+        $stmtProfil->bindParam(':mot_de_passe', $mot_de_passe);
+        $stmtProfil->execute();
+        echo "Profil ajouté avec succès.";
+    } catch (PDOException $e) {
+        echo "Erreur lors de l'ajout de l'agent dans profil: " . $e->getMessage();
+    }
+} else {
+    // Redirection si le formulaire n'a pas été soumis
+    header("Location: creeA.html");
+    exit;
+}
+?>
