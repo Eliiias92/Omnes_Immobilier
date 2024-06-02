@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Messagerie - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        .tabs {
+            display: flex;
+            cursor: pointer;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .tab {
+            padding: 10px 20px;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            background-color: #f2f2f2;
+            margin-right: 5px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+        }
+        .tab-content {
+            display: none;
+            border: 1px solid #ccc;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: white;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .message-container {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            margin: 50px auto;
+        }
+        .message-column {
+            width: 45%;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+        .message-column h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .message-item {
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            position: relative;
+        }
+        .message-item button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: red;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        .message-alert {
+            text-align: center;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message-alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .message-alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        #jitsi-container {
+            width: 100%;
+            height: 600px;
+        }
+    </style>
+    <script src='https://meet.jit.si/external_api.js'></script>
+</head>
+<body>
+    <header>
+        <h1>Messagerie - Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="Accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="images/icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="tabs">
+            <div class="tab active" data-tab="messages">Messagerie</div>
+            <div class="tab" data-tab="video">Vidéoconférence</div>
+        </div>
+
+        <div id="messages" class="tab-content active">
+            <div id="alertMessage" class="message-alert" style="display: none;"></div>
+            <div class="message-container">
+                <div class="message-column">
+                    <h2>Clients</h2>
+                    <div id="clientsList"></div>
+                </div>
+                <div class="message-column">
+                    <h2>Messages Envoyés</h2>
+                    <div id="messagesSentList"></div>
+                </div>
+                <div class="message-column">
+                    <h2>Messages Reçus</h2>
+                    <div id="messagesReceivedList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="video" class="tab-content">
+            <h2>Vidéoconférence</h2>
+            <div id="jitsi-container"></div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Gestion des onglets
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(tc => tc.classList.remove('active'));
+
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                });
+            });
+
+            // Charger les messages et les clients
+            fetchMessages();
+            fetchClients();
+
+            // Initialisation de Jitsi Meet pour la vidéoconférence
+            const domain = "meet.jit.si";
+            const options = {
+                roomName: "OmnesImmobilierChatRoom",
+                width: "100%",
+                height: 600,
+                parentNode: document.querySelector('#jitsi-container')
+            };
+            const api = new JitsiMeetExternalAPI(domain, options);
+        });
+
+        function fetchMessages() {
+            fetch('getMessages.php')
+                .then(response => response.json())
+                .then(data => {
+                    const alertMessage = document.getElementById('alertMessage');
+                    const messagesSentList = document.getElementById('messagesSentList');
+                    const messagesReceivedList = document.getElementById('messagesReceivedList');
+
+                    if (data.error) {
+                        alertMessage.textContent = data.error;
+                        alertMessage.className = 'message-alert error';
+                        alertMessage.style.display = 'block';
+                        return;
+                    }
+
+                    alertMessage.style.display = 'none';
+                    messagesSentList.innerHTML = '';
+                    messagesReceivedList.innerHTML = '';
+
+                    if (data.messages_sent) {
+                        data.messages_sent.forEach(message => {
+                            const messageItem = document.createElement('div');
+                            messageItem.className = 'message-item';
+                            messageItem.innerHTML = `
+                                <p>${message.message}</p>
+                                <p>Envoyé à: Agent ID: ${message.agent_id}</p>
+                                <p>${message.created_at}</p>
+                                <button onclick="deleteMessage(${message.id})">Supprimer</button>
+                            `;
+                            messagesSentList.appendChild(messageItem);
+                        });
+                    }
+
+                    if (data.messages_received) {
+                        data.messages_received.forEach(message => {
+                            const messageItem = document.createElement('div');
+                            messageItem.className = 'message-item';
+                            messageItem.innerHTML = `
+                                <p>${message.message}</p>
+                                <p>Envoyé par: <a href="reply.php?user_mail=${message.user_mail}">${message.user_mail}</a></p>
+                                <p>${message.created_at}</p>
+                                <button onclick="deleteMessage(${message.id})">Supprimer</button>
+                            `;
+                            messagesReceivedList.appendChild(messageItem);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des messages:', error);
+                    const alertMessage = document.getElementById('alertMessage');
+                    alertMessage.textContent = 'Erreur lors de la récupération des messages.';
+                    alertMessage.className = 'message-alert error';
+                    alertMessage.style.display = 'block';
+                });
+        }
+
+        function fetchClients() {
+            fetch('getClients.php')
+                .then(response => response.json())
+                .then(data => {
+                    const clientsList = document.getElementById('clientsList');
+
+                    if (data.error) {
+                        console.error('Erreur lors de la récupération des clients:', data.error);
+                        return;
+                    }
+
+                    clientsList.innerHTML = '';
+                    data.clients.forEach(client => {
+                        const clientItem = document.createElement('div');
+                        clientItem.className = 'message-item';
+                        clientItem.innerHTML = `
+                            <p>${client.user_mail}</p>
+                            <button onclick="contactClient('${client.user_mail}')">Contacter</button>
+                        `;
+                        clientsList.appendChild(clientItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des clients:', error);
+                });
+        }
+
+        function contactClient(userMail) {
+            window.location.href = `reply.php?user_mail=${userMail}`;
+        }
+
+        function deleteMessage(messageId) {
+            if (!confirm('Voulez-vous vraiment supprimer ce message ?')) {
+                return;
+            }
+
+            fetch('deleteMessage.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message_id: messageId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                const alertMessage = document.getElementById('alertMessage');
+                if (result.success) {
+                    alertMessage.textContent = 'Message supprimé avec succès.';
+                    alertMessage.className = 'message-alert success';
+                    fetchMessages();
+                } else {
+                    alertMessage.textContent = `Erreur lors de la suppression du message: ${result.error}`;
+                    alertMessage.className = 'message-alert error';
+                }
+                alertMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                const alertMessage = document.getElementById('alertMessage');
+                alertMessage.textContent = 'Une erreur s\'est produite lors de la suppression du message.';
+                alertMessage.className = 'message-alert error';
+                alertMessage.style.display = 'block';
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('index.php')
+                .then(response => response.json())
+                .then(data => {
+                    const isUserLoggedIn = data.isLoggedIn;
+                    const isAdmin = data.isAdmin;
+                    const isAgent = data.isAgent;
+                    const userIcon = document.getElementById("userIcon");
+                    const userIconLink = document.getElementById("userIconLink");
+                    if (isUserLoggedIn) {
+                        if (isAdmin) {
+                            userIcon.src = "images/icone_admin.png";
+                            userIcon.alt = "Admin";
+                            userIconLink.href = "admin.php";
+                        } else if (isAgent) {
+                            userIcon.src = "images/icone_agent.png";
+                            userIcon.alt = "Agent";
+                            userIconLink.href = "agent.php";
+                        } else {
+                            userIcon.src = "images/icone_user.png";
+                            userIcon.alt = "Client";
+                            userIconLink.href = "user.php";
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching user data:', error));
+        });
+    </script>
+    <footer>
+        <p>&copy; 2024 Omnes Immobilier. Tous droits réservés.</p>
+        <p>123 Rue Exemple, 75001 Paris, France</p>
+        <p>Téléphone: 01 23 45 67 89</p>
+    </footer>
+</body>
+</html>

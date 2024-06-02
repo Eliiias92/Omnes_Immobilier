@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Informations sur l'agent - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .communication-buttons {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+        .communication-buttons button {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: #007bff;
+            color: white;
+        }
+        .reserved {
+            background-color: #ffdddd;
+            color: #ff0000;
+            cursor: not-allowed;
+        }
+        .available {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Informations sur l'agent</h1>
+        <nav>
+            <ul>
+                <li><a href="accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="images/icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                fetch('index.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        const isUserLoggedIn = data.isLoggedIn;
+                        const isAdmin = data.isAdmin;
+                        const isAgent = data.isAgent;
+                        const userIcon = document.getElementById("userIcon");
+                        const userIconLink = document.getElementById("userIconLink");
+                        if (isUserLoggedIn) {
+                            if (isAdmin) {
+                                userIcon.src = "images/icone_admin.png";
+                                userIcon.alt = "Admin";
+                                userIconLink.href = "admin.php";
+                            } else if (isAgent) {
+                                userIcon.src = "images/icone_agent.png";
+                                userIcon.alt = "Agent";
+                                userIconLink.href = "agent.php";
+                            } else {
+                                userIcon.src = "images/icone_user.png";
+                                userIcon.alt = "Client";
+                                userIconLink.href = "user.php";
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching user data:', error));
+            });
+        </script>
+    </header>
+
+    <main>
+        <button class="fixed-button" onclick="window.location.href='ToutParcourir.html'">Retour</button>
+        <div class="agent-info-container" id="agent-info"></div>
+        <div class="communication-buttons">
+            <button onclick="ouvrirFormulaireMessage()">Envoyer un message</button>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const params = new URLSearchParams(window.location.search);
+            const agentId = params.get('id');
+            if (agentId) {
+                fetch(`agentData.php?id=${agentId}`)
+                    .then(response => response.json())
+                    .then(agent => {
+                        if (agent.error) {
+                            console.error('Error fetching agent data:', agent.error);
+                            document.getElementById('agent-info').innerHTML = '<p>Erreur lors de la récupération des données de l\'agent.</p>';
+                            return;
+                        }
+
+                        const agentInfoDiv = document.getElementById('agent-info');
+                        if (agent) {
+                            let hours = [
+                                '09:00', '10:00', '11:00', '12:00',
+                                '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'
+                            ];
+                            let days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+
+                            let disponibilitesTable = `
+                                <table class="disponibilites-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Heure</th>
+                                            ${days.map(day => `<th>${day}</th>`).join('')}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                            `;
+
+                            hours.forEach(hour => {
+                                disponibilitesTable += `<tr><td>${hour}</td>`;
+                                days.forEach(day => {
+                                    let dispo = agent.disponibilites.find(d => d.jour === day);
+                                    let cellClass = 'unavailable';
+                                    let cellContent = 'Non disponible';
+                                    if (dispo) {
+                                        let start = new Date(`1970-01-01T${dispo.heure_debut}`);
+                                        let end = new Date(`1970-01-01T${dispo.heure_fin}`);
+                                        let currentHour = new Date(`1970-01-01T${hour}:00`);
+                                        if (currentHour >= start && currentHour < end) {
+                                            cellClass = 'available';
+                                            cellContent = 'Disponible';
+                                        }
+                                    }
+                                    disponibilitesTable += `<td class="${cellClass}" data-day="${day}" data-hour="${hour}" onclick="confirmRdv(${agentId}, '${day}', '${hour}', this)">${cellContent}</td>`;
+                                });
+                                disponibilitesTable += `</tr>`;
+                            });
+
+                            disponibilitesTable += `
+                                    </tbody>
+                                </table>
+                            `;
+                            agentInfoDiv.innerHTML = `
+                                <img src="${agent.photo}" alt="${agent.nom} ${agent.prenom}">
+                                <h2>${agent.nom} ${agent.prenom}</h2>
+                                <p><strong>Adresse:</strong> ${agent.adresse_bureau}</p>
+                                <p><strong>Téléphone:</strong> ${agent.telephone}</p>
+                                <p><strong>Email:</strong> <a href="mailto:${agent.mail}">${agent.mail}</a></p>
+                                <h3>CV:</h3>
+                                <p>${agent.cv}</p>
+                                <h3>Disponibilités:</h3>
+                                ${disponibilitesTable}
+                            `;
+
+                            // Fetch existing reservations
+                            fetchReservations(agentId);
+                        } else {
+                            agentInfoDiv.innerHTML = '<p>Agent non trouvé.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching agent data:', error);
+                        document.getElementById('agent-info').innerHTML = '<p>Erreur lors de la récupération des données de l\'agent.</p>';
+                    });
+            } else {
+                document.getElementById('agent-info').innerHTML = '<p>ID de l\'agent non fourni.</p>';
+            }
+        });
+
+        function fetchReservations(agentId) {
+            fetch(`getReservations.php?agent_id=${agentId}`)
+                .then(response => response.json())
+                .then(reservations => {
+                    if (Array.isArray(reservations)) {
+                        reservations.forEach(reservation => {
+                            const reservedCell = document.querySelector(`td[data-day="${reservation.jour}"][data-hour="${reservation.heure}"]`);
+                            if (reservedCell) {
+                                reservedCell.classList.remove('available');
+                                reservedCell.classList.add('reserved');
+                                reservedCell.textContent = 'Réservé';
+                                reservedCell.onclick = null;  // Make the cell non-clickable
+                            }
+                        });
+                    } else {
+                        console.error('Error: Expected array of reservations', reservations);
+                    }
+                })
+                .catch(error => console.error('Error fetching reservations:', error));
+        }
+
+        function confirmRdv(agentId, day, hour, cell) {
+            if (cell.classList.contains('unavailable') || cell.classList.contains('reserved')) {
+                return;
+            }
+            if (confirm(`Voulez-vous prendre un rendez-vous le ${day} à ${hour} ?`)) {
+                reserveRdv(agentId, day, hour, cell);
+            }
+        }
+
+        function reserveRdv(agentId, day, hour, cell) {
+            fetch(`reserveRdv.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ agent_id: agentId, jour: day, heure: hour })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    cell.classList.remove('available');
+                    cell.classList.add('reserved');
+                    cell.textContent = 'Réservé';
+                    cell.onclick = null;  // Make the cell non-clickable
+                    alert('Ce créneau est maintenant pris. Vous allez recevoir une confirmation par SMS ou courriel.');
+                } else {
+                    alert(`La réservation a échoué: ${result.error}. Veuillez réessayer.`);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erreur lors de la réservation. Veuillez réessayer.');
+            });
+        }
+
+        function ouvrirFormulaireMessage() {
+            const params = new URLSearchParams(window.location.search);
+            const agentId = params.get('id');
+            window.location.href = `nouveauMessage.html?agent_id=${agentId}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tout Parcourir - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Tout Parcourir - Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="Accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+        <script>
+            // Script pour vérifier et afficher le rôle de l'utilisateur connecté
+            document.addEventListener("DOMContentLoaded", function() {
+                fetch('index.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        const isUserLoggedIn = data.isLoggedIn;
+                        const isAdmin = data.isAdmin;
+                        const isAgent = data.isAgent;
+                        const userIcon = document.getElementById("userIcon");
+                        const userIconLink = document.getElementById("userIconLink");
+                        if (isUserLoggedIn) {
+                            if (isAdmin) {
+                                userIcon.src = "icone_admin.png";
+                                userIcon.alt = "Admin";
+                                userIconLink.href = "admin.php";
+                            } else if (isAgent) {
+                                userIcon.src = "icone_agent.png";
+                                userIcon.alt = "Agent";
+                                userIconLink.href = "agent.php";
+                            } else {
+                                userIcon.src = "icone_user.png";
+                                userIcon.alt = "Client";
+                                userIconLink.href = "user.php";
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching user data:', error));
+            });
+        </script>
+        <div class="category-nav">
+            <ul>
+                <li><a href="#residentiel">Immobilier résidentiel</a></li>
+                <li><a href="#commercial">Immobilier commercial</a></li>
+                <li><a href="#terrain">Terrain</a></li>
+                <li><a href="#location">Appartement à louer</a></li>
+            </ul>
+        </div>
+    </header>
+
+    <main>
+        <!-- Immobilier résidentiel -->
+        <section id="residentiel">
+            <h2>Immobilier résidentiel</h2>
+            <div id="residentiel-properties"></div>
+            <div class="agent-list">
+                <h3>Nos agents pour l'immobilier résidentiel</h3>
+                <div id="residentiel-agents"></div>
+            </div>
+        </section>
+        
+        <!-- Immobilier commercial -->
+        <section id="commercial">
+            <h2>Immobilier commercial</h2>
+            <div id="commercial-properties"></div>
+            <div class="agent-list">
+                <h3>Nos agents pour l'immobilier commercial</h3>
+                <div id="commercial-agents"></div>
+            </div>
+        </section>
+        
+        <!-- Terrains -->
+        <section id="terrain">
+            <h2>Terrain</h2>
+            <div id="terrain-properties"></div>
+            <div class="agent-list">
+                <h3>Nos agents pour les terrains</h3>
+                <div id="terrain-agents"></div>
+            </div>
+        </section>
+        
+        <!-- Appartements à louer -->
+        <section id="location">
+            <h2>Appartement à louer</h2>
+            <div id="location-properties"></div>
+            <div class="agent-list">
+                <h3>Nos agents pour les appartements à louer</h3>
+                <div id="location-agents"></div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    const links = document.querySelectorAll('nav a, .category-nav a');
+    links.forEach(link => {
+        link.addEventListener('click', function(event) {
+            const href = this.getAttribute('href');
+            if (href.startsWith('#')) {
+                event.preventDefault();
+                const targetId = href.substring(1);
+                const section = document.getElementById(targetId);
+                if (section) {
+                    window.scrollTo({
+                        top: section.offsetTop - 50,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    console.warn(`Section with ID ${targetId} not found.`);
+                }
+            } else {
+                window.location.href = href;
+            }
+        });
+    });
+
+    // Récupération des propriétés et agents
+    fetch('ToutParcourir.php')
+        .then(response => response.json())
+        .then(data => {
+            const properties = data.properties;
+            const agents = data.agents;
+
+            const categories = {
+                "Immobilier résidentiel": "residentiel-properties",
+                "Immobilier commercial": "commercial-properties",
+                "Terrain": "terrain-properties",
+                "Appartement à louer": "location-properties"
+            };
+
+            const agentsByCategory = {
+                1: "residentiel-agents",
+                2: "commercial-agents",
+                3: "terrain-agents",
+                4: "location-agents"
+            };
+
+            properties.forEach(property => {
+                const categoryDiv = document.getElementById(categories[property.categorie]);
+                if (categoryDiv) {
+                    const propertyCard = document.createElement('div');
+                    propertyCard.className = "property-card";
+                    propertyCard.innerHTML = `
+                        <img src="${property.image}" alt="${property.titre}" style="max-width: 300px;">
+                        <h3>${property.titre}</h3>
+                        <p>Prix: ${property.prix}</p>
+                    `;
+                    propertyCard.addEventListener('click', function() {
+                        window.location.href = `propriete.html?id=${property.id}`;
+                    });
+                    categoryDiv.appendChild(propertyCard);
+                } else {
+                    console.warn(`Category div with ID ${categories[property.categorie]} not found.`);
+                }
+            });
+
+            agents.forEach(agent => {
+                const agentCategory = agent.category_id;
+                const categoryDiv = document.getElementById(agentsByCategory[agentCategory]);
+                if (categoryDiv) {
+                    const agentButton = document.createElement('button');
+                    agentButton.className = "agent-card";
+                    agentButton.textContent = `${agent.nom} ${agent.prenom}`;
+                    agentButton.addEventListener('click', function() {
+                        window.location.href = `agent2.html?id=${agent.id}`;
+                    });
+                    categoryDiv.appendChild(agentButton);
+                } else {
+                    console.warn(`Category div with ID ${agentsByCategory[agentCategory]} not found.`);
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+
+    loadReservations();
+});
+
+// Fonction pour charger les réservations
+function loadReservations() {
+    const agentId = getAgentIdFromUrl();
+    fetch(`getReservations.php?agent_id=${agentId}`)
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(reservation => {
+                const cell = document.querySelector(`[data-jour="${reservation.jour}"][data-heure="${reservation.heure}"]`);
+                if (cell) {
+                    cell.classList.remove("available");
+                    cell.classList.add("reserved");
+                    cell.textContent = 'Réservé';
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching reservations:', error));
+}
+
+// Fonction pour confirmer un rendez-vous
+function confirmRdv(agentId, day, hour, cell) {
+    if (cell.classList.contains('unavailable') || cell.classList.contains('reserved')) {
+        return;
+    }
+    if (confirm(`Voulez-vous prendre un rendez-vous le ${day} à ${hour} ?`)) {
+        reserveRdv(agentId, day, hour, cell);
+    }
+}
+
+// Fonction pour réserver un rendez-vous
+function reserveRdv(agentId, day, hour, cell) {
+    console.log(`Reserving RDV for agent ${agentId} on ${day} at ${hour}`);
+    fetch('reserveRdv.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ agent_id: agentId, jour: day, heure: hour })
+    })
+    .then(response => response.json())
+    .then(result => {
+        console.log(result);
+        if (result.success) {
+            cell.classList.remove('available');
+            cell.classList.add('reserved');
+            cell.textContent = 'Réservé';
+            alert('Ce créneau est maintenant pris. Vous allez recevoir une confirmation par SMS ou courriel.');
+        } else {
+            alert(`La réservation a échoué: ${result.error}. Veuillez réessayer.`);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur s\'est produite lors de la réservation.');
+    });
+}
+
+function getAgentIdFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+}
+    </script>
+</body>
+</html>
