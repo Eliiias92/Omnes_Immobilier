@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rendez-vous - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        .rdv-container {
+            width: 80%;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+        .rdv-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .rdv-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .rdv-table th, .rdv-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .rdv-table th {
+            background-color: #f2f2f2;
+        }
+        .reserved {
+            background-color: #ffdddd;
+            color: #ff0000;
+            cursor: not-allowed;
+        }
+        .available {
+            cursor: pointer;
+        }
+        .rdv-table button {
+            background-color: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .rdv-table button:hover {
+            background-color: #cc0000;
+        }
+        .rdv-alert {
+            text-align: center;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .rdv-alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Rendez-vous - Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="Accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="images/icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div id="alertRdv" class="rdv-alert" style="display: none;"></div>
+        <div class="rdv-container">
+            <h2>Vos Rendez-vous</h2>
+            <table class="rdv-table">
+                <thead>
+                    <tr>
+                        <th>Jour</th>
+                        <th>Heure</th>
+                        <th>Agent/User</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="rdvList">
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchUserRole();
+        });
+
+        function fetchUserRole() {
+            fetch('getUserRole.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.role === 'user') {
+                        fetchRendezvous('getRendezvous.php');
+                    } else if (data.role === 'agent') {
+                        fetchRendezvous('getReservations.php');
+                    } else {
+                        displayError('Utilisateur non connecté ou rôle non défini.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération du rôle:', error);
+                    displayError('Erreur lors de la récupération du rôle.');
+                });
+        }
+
+        function fetchRendezvous(url) {
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Données reçues:', data);
+
+                    const alertRdv = document.getElementById('alertRdv');
+                    const rdvList = document.getElementById('rdvList');
+
+                    if (!Array.isArray(data)) {
+                        displayError('Erreur lors de la récupération des rendez-vous.');
+                        return;
+                    }
+
+                    if (data.length === 0) {
+                        alertRdv.textContent = 'Aucun rendez-vous trouvé.';
+                        alertRdv.className = 'rdv-alert';
+                        alertRdv.style.display = 'block';
+                        return;
+                    }
+
+                    alertRdv.style.display = 'none';
+                    rdvList.innerHTML = '';
+
+                    data.forEach(rdv => {
+                        const row = document.createElement('tr');
+                        const thirdColumn = url === 'getRendezvous.php' ? rdv.agent_id : rdv.user_mail;
+                        row.innerHTML = `
+                            <td>${rdv.jour}</td>
+                            <td>${rdv.heure}</td>
+                            <td>${thirdColumn}</td>
+                            <td><button onclick="cancelRdv(${rdv.id})">Annuler</button></td>
+                        `;
+                        rdvList.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des rendez-vous:', error);
+                    displayError('Erreur lors de la récupération des rendez-vous.');
+                });
+        }
+
+        function cancelRdv(rdvId) {
+            fetch('cancelRdv.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: rdvId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Rendez-vous annulé avec succès.');
+                    fetchUserRole(); // Mettre à jour la liste des rendez-vous après annulation
+                } else {
+                    alert('Erreur lors de l\'annulation du rendez-vous.');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de l\'annulation du rendez-vous:', error);
+                alert('Erreur lors de l\'annulation du rendez-vous.');
+            });
+        }
+
+        function displayError(message) {
+            const alertRdv = document.getElementById('alertRdv');
+            alertRdv.textContent = message;
+            alertRdv.className = 'rdv-alert error';
+            alertRdv.style.display = 'block';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch('index.php')
+                .then(response => response.json())
+                .then(data => {
+                    const isUserLoggedIn = data.isLoggedIn;
+                    const isAdmin = data.isAdmin;
+                    const isAgent = data.isAgent;
+                    const userIcon = document.getElementById("userIcon");
+                    const userIconLink = document.getElementById("userIconLink");
+                    if (isUserLoggedIn) {
+                        if (isAdmin) {
+                            userIcon.src = "images/icone_admin.png";
+                            userIcon.alt = "Admin";
+                            userIconLink.href = "admin.php";
+                        } else if (isAgent) {
+                            userIcon.src = "images/icone_agent.png";
+                            userIcon.alt = "Agent";
+                            userIconLink.href = "agent.php";
+                        } else {
+                            userIcon.src = "images/icone_user.png";
+                            userIcon.alt = "Client";
+                            userIconLink.href = "user.php";
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching user data:', error));
+        });
+    </script>
+
+    <footer>
+        <p>&copy; 2024 Omnes Immobilier. Tous droits réservés.</p>
+        <p>123 Rue Exemple, 75001 Paris, France</p>
+        <p>Téléphone: 01 23 45 67 89</p>
+    </footer>
+</body>
+</html>
