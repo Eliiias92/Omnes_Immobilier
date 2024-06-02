@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    
+    <style>
+    footer {
+      background-color: #333;
+      color: white;
+      padding: 20px 10px;
+      text-align: center;
+    }
+    .carousel {
+        position: relative;
+        max-width: 800px;
+        margin: 20px auto;
+        overflow: hidden;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .carousel img {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+    }
+    .carousel .prev, .carousel .next {
+        position: absolute;
+        top: 50%;
+        width: auto;
+        padding: 16px;
+        margin-top: -22px;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        transition: 0.6s ease;
+        user-select: none;
+        cursor: pointer;
+    }
+    .carousel .prev {
+        left: 0;
+        border-radius: 0 3px 3px 0;
+    }
+    .carousel .next {
+        right: 0;
+        border-radius: 3px 0 0 3px;
+    }
+    .carousel .prev:hover, .carousel .next:hover {
+        background-color: rgba(0,0,0,0.8);
+    }
+    .carousel-dots {
+        text-align: center;
+        padding: 10px;
+        background: #333;
+    }
+    .carousel-dots span {
+        cursor: pointer;
+        height: 15px;
+        width: 15px;
+        margin: 0 2px;
+        background-color: #bbb;
+        border-radius: 50%;
+        display: inline-block;
+        transition: background-color 0.6s ease;
+    }
+    .carousel-dots .active, .carousel-dots span:hover {
+        background-color: #717171;
+    }
+    .event-section, .bulletin-section {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        text-align: left;
+    }
+    .event-section h2, .bulletin-section h2 {
+        color: #007bff;
+    }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="Accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li> <!-- Lien vers la page de messagerie -->
+                <a id="userIconLink" href="#"><img id="userIcon" src="icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+                <script>
+                    document.addEventListener("DOMContentLoaded", function() {
+                        fetch('index.php')
+                            .then(response => response.json())
+                            .then(data => {
+                                const isUserLoggedIn = data.isLoggedIn;
+                                const isAdmin = data.isAdmin;
+                                const isAgent = data.isAgent;
+                                const userIcon = document.getElementById("userIcon");
+                                const userIconLink = document.getElementById("userIconLink");
+                                if (isUserLoggedIn) {
+                                    if (isAdmin) {
+                                        userIcon.src = "icone_admin.png";
+                                        userIcon.alt = "Admin";
+                                        userIconLink.href = "admin.php";
+                                    } else if (isAgent) {
+                                        userIcon.src = "icone_agent.png";
+                                        userIcon.alt = "Agent";
+                                        userIconLink.href = "agent.php";
+                                    } else {
+                                        userIcon.src = "icone_user.png";
+                                        userIcon.alt = "Client";
+                                        userIconLink.href = "user.php";
+                                    }
+                                }
+                            })
+                            .catch(error => console.error('Error fetching user data:', error));
+                    });
+                </script>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section id="accueil">
+            <h2>Bienvenue chez Omnes Immobilier</h2>
+            <p>Trouvez la propriété de vos rêves avec notre vaste sélection de biens immobiliers résidentiels, commerciaux et de terrains.</p>
+            <div class="carousel">
+                <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
+                <img src="image1.jpg" alt="Propriété 1">
+                <img src="image2.jpg" alt="Propriété 2">
+                <img src="image3.jpg" alt="Propriété 3">
+                <a class="next" onclick="changeSlide(1)">&#10095;</a>
+            </div>
+            <div class="carousel-dots">
+                <span class="dot" onclick="currentSlide(1)"></span>
+                <span class="dot" onclick="currentSlide(2)"></span>
+                <span class="dot" onclick="currentSlide(3)"></span>
+            </div>
+            <div class="event-section" id="event-section">
+                <h2>Évènement de la semaine</h2>
+                <p>Venez participer à notre porte ouverte ce samedi de 10h à 16h et découvrez nos offres spéciales sur plusieurs propriétés !</p>
+            </div>
+            <div class="bulletin-section" id="bulletin-section" style="display: none;">
+                <h2>Bulletin Immobilier de la semaine</h2>
+                <p>Cette semaine, découvrez nos conseils pour obtenir le meilleur taux hypothécaire et les dernières nouvelles du marché immobilier.</p>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 Omnes Immobilier. Tous droits réservés.</p>
+        <p>123 Rue Exemple, 75001 Paris, France</p>
+        <p>Téléphone: 01 23 45 67 89</p>
+    </footer>
+    <script>
+        let slideIndex = 0;
+        showSlides();
+        function showSlides() {
+            let i;
+            let slides = document.querySelectorAll('.carousel img');
+            let dots = document.querySelectorAll('.dot');
+            for (i = 0; i < slides.length; i++) {
+                slides[i].style.display = 'none';
+            }
+            slideIndex++;
+            if (slideIndex > slides.length) {slideIndex = 1}
+            for (i = 0; i < dots.length; i++) {
+                dots[i].className = dots[i].className.replace(" active", "");
+            }
+            slides[slideIndex-1].style.display = 'block';
+            dots[slideIndex-1].className += " active";
+            setTimeout(showSlides, 3000); // Change image every 3 seconds
+        }
+        function changeSlide(n) {
+            slideIndex += n;
+            if (slideIndex > document.querySelectorAll('.carousel img').length) {slideIndex = 1}
+            if (slideIndex < 1) {slideIndex = document.querySelectorAll('.carousel img').length}
+            showSlides();
+        }
+        function currentSlide(n) {
+            slideIndex = n;
+            showSlides();
+        }
+    </script>
+</body>
+</html>
