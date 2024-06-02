@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Envoyer un message - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        .return-button {
+            background-color: #ffffff;
+            color: #007bff;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .return-button:hover {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+        .message-form-container {
+            width: 50%;
+            margin: 50px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+
+        .message-form-container h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .message-form-container textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .message-form-container button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .message-form-container button:hover {
+            background-color: #0056b3;
+        }
+
+        .message-alert {
+            text-align: center;
+            margin: 20px auto;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .message-alert.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-alert.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Envoyer un message - Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+        
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                fetch('index.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        const isUserLoggedIn = data.isLoggedIn;
+                        const isAdmin = data.isAdmin;
+                        const isAgent = data.isAgent;
+                        
+                        const userIcon = document.getElementById("userIcon");
+                        const userIconLink = document.getElementById("userIconLink");
+        
+                        if (isUserLoggedIn) {
+                            if (isAdmin) {
+                                userIcon.src = "icone_admin.png";
+                                userIcon.alt = "Admin";
+                                userIconLink.href = "admin.php";
+                            } else if (isAgent) {
+                                userIcon.src = "icone_agent.png";
+                                userIcon.alt = "Agent";
+                                userIconLink.href = "agent.php";
+                            } else {
+                                userIcon.src = "icone_user.png";
+                                userIcon.alt = "Client";
+                                userIconLink.href = "user.php";
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching user data:', error));
+            });
+        </script>
+    </header>
+
+    <main>
+        <div id="alertMessage" class="message-alert" style="display: none;"></div>
+        <div class="message-form-container">
+            <button class="return-button" onclick="history.back()">Retour</button>
+            <h2>Envoyer un message</h2>
+            <textarea id="messageContent" placeholder="Écrivez votre message ici..."></textarea>
+            <button onclick="sendMessage()">Envoyer</button>
+        </div>
+    </main>
+
+    <script>
+        function sendMessage() {
+            const messageContent = document.getElementById('messageContent').value;
+            const params = new URLSearchParams(window.location.search);
+            const agentId = params.get('agent_id');
+
+            if (!messageContent) {
+                alert('Veuillez écrire un message avant de l\'envoyer.');
+                return;
+            }
+
+            console.log('Agent ID:', agentId); // Vérifiez l'agent ID
+            console.log('Message:', messageContent); // Vérifiez le contenu du message
+
+            fetch('envoyerMessage.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    agent_id: agentId,
+                    message: messageContent
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(result => {
+                console.log('Response:', result); // Affichez la réponse
+                const alertMessage = document.getElementById('alertMessage');
+                if (result.success) {
+                    alertMessage.textContent = 'Votre message a été envoyé avec succès.';
+                    alertMessage.className = 'message-alert success';
+                } else {
+                    alertMessage.textContent = `Erreur lors de l'envoi du message: ${result.error}`;
+                    alertMessage.className = 'message-alert error';
+                }
+                alertMessage.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                const alertMessage = document.getElementById('alertMessage');
+                alertMessage.textContent = 'Une erreur s\'est produite lors de l\'envoi du message.';
+                alertMessage.className = 'message-alert error';
+                alertMessage.style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
