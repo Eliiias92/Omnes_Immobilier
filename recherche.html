@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Recherche - Omnes Immobilier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <style>
+        footer {
+            background-color: #333;
+            color: white;
+            padding: 20px 10px;
+            text-align: center;
+        }
+        .search-section {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            text-align: left;
+        }
+        .search-section h2 {
+            color: #007bff;
+        }
+        .search-section form {
+            display: flex;
+            flex-direction: column;
+        }
+        .search-section input[type="text"], .search-section select {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .search-section button {
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .search-section button:hover {
+            background-color: #0056b3;
+        }
+        .search-results {
+            margin-top: 20px;
+        }
+        .suggestions {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: white;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .suggestions div {
+            padding: 10px;
+            cursor: pointer;
+        }
+        .suggestions div:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Recherche - Omnes Immobilier</h1>
+        <nav>
+            <ul>
+                <li><a href="Accueil.html">Accueil</a></li>
+                <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+                <li><a href="recherche.html">Recherche</a></li>
+                <li><a href="rendezvous.html">Rendez-vous</a></li>
+                <li><a href="compte.html">Votre Compte</a></li>
+                <li><a href="messagerie.html">Messagerie</a></li>
+                <a id="userIconLink" href="#"><img id="userIcon" src="icone_non_connecte.png" alt="Non connecté" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+            </ul>
+        </nav>
+        <script>
+            // Script pour vérifier et afficher le rôle de l'utilisateur connecté
+            document.addEventListener("DOMContentLoaded", function() {
+                fetch('index.php')
+                    .then(response => response.json())
+                    .then(data => {
+                        const isUserLoggedIn = data.isLoggedIn;
+                        const isAdmin = data.isAdmin;
+                        const isAgent = data.isAgent;
+                        const userIcon = document.getElementById("userIcon");
+                        const userIconLink = document.getElementById("userIconLink");
+                        if (isUserLoggedIn) {
+                            if (isAdmin) {
+                                userIcon.src = "icone_admin.png";
+                                userIcon.alt = "Admin";
+                                userIconLink.href = "admin.php";
+                            } else if (isAgent) {
+                                userIcon.src = "icone_agent.png";
+                                userIcon.alt = "Agent";
+                                userIconLink.href = "agent.php";
+                            } else {
+                                userIcon.src = "icone_user.png";
+                                userIcon.alt = "Client";
+                                userIconLink.href = "user.php";
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Error fetching user data:', error));
+            });
+        </script>
+    </header>
+
+    <main>
+        <div class="search-section">
+            <h2>Recherche</h2>
+            <form id="search-form" onsubmit="performSearch(event)">
+                <label for="search-type">Type de recherche:</label>
+                <select id="search-type" name="search-type">
+                    <option value="agent">Rechercher un agent par nom</option>
+                    <option value="property">Rechercher une propriété par numéro</option>
+                    <option value="city">Rechercher des biens par ville</option>
+                </select>
+                <input type="text" id="search-query" name="search-query" placeholder="Entrez votre recherche ici..." oninput="showSuggestions(this.value)">
+                <div class="suggestions" id="suggestions"></div>
+                <button type="submit">Rechercher</button>
+            </form>
+            <div class="search-results" id="search-results"></div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Omnes Immobilier. Tous droits réservés.</p>
+        <p>123 Rue Exemple, 75001 Paris, France</p>
+        <p>Téléphone: 01 23 45 67 89</p>
+    </footer>
+
+    <script>
+        function performSearch(event) {
+            event.preventDefault();
+            const searchType = document.getElementById('search-type').value;
+            const searchQuery = document.getElementById('search-query').value.toLowerCase();
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = '';
+
+            fetch(`recherche.php?type=${searchType}&query=${searchQuery}`)
+                .then(response => response.json())
+                .then(results => {
+                    if (results.length === 0) {
+                        resultsContainer.innerHTML = '<p>Aucun résultat trouvé.</p>';
+                        return;
+                    }
+
+                    let html = '<ul>';
+                    results.forEach(result => {
+                        if (searchType === 'agent') {
+                            html += `<li><a href="agent2.html?id=${result.id}">Agent: ${result.nom} ${result.prenom}</a></li>`;
+                        } else if (searchType === 'property') {
+                            html += `<li><a href="propriete.html?id=${result.id}">Propriété: ${result.titre}, ${result.adresse}, ${result.ville}</a></li>`;
+                        } else if (searchType === 'city') {
+                            html += `<li><a href="propriete.html?id=${result.id}">Propriété: ${result.titre}, ${result.adresse}, ${result.ville}</a></li>`;
+                        }
+                    });
+                    html += '</ul>';
+                    resultsContainer.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des résultats de recherche:', error);
+                    resultsContainer.innerHTML = '<p>Erreur lors de la récupération des résultats de recherche.</p>';
+                });
+        }
+
+        function showSuggestions(query) {
+            const searchType = document.getElementById('search-type').value;
+            const suggestionsContainer = document.getElementById('suggestions');
+            suggestionsContainer.innerHTML = '';
+
+            if (query.length === 0) {
+                return;
+            }
+
+            fetch(`recherche.php?type=${searchType}&query=${query}`)
+                .then(response => response.json())
+                .then(suggestions => {
+                    if (suggestions.length === 0) {
+                        suggestionsContainer.innerHTML = '<p>Aucune suggestion trouvée.</p>';
+                        return;
+                    }
+
+                    suggestions.forEach(suggestion => {
+                        const suggestionDiv = document.createElement('div');
+                        if (searchType === 'agent') {
+                            suggestionDiv.textContent = `${suggestion.nom} ${suggestion.prenom}`;
+                        } else if (searchType === 'property') {
+                            suggestionDiv.textContent = `Propriété: ${suggestion.titre} (${suggestion.ville})`;
+                        } else if (searchType === 'city') {
+                            suggestionDiv.textContent = suggestion.ville;
+                        }
+                        suggestionDiv.onclick = () => {
+                            document.getElementById('search-query').value = suggestionDiv.textContent;
+                            suggestionsContainer.innerHTML = '';
+                        };
+                        suggestionsContainer.appendChild(suggestionDiv);
+                    });
+                })
+                .catch(error => {
+                    console.error('Erreur lors de la récupération des suggestions:', error);
+                    suggestionsContainer.innerHTML = '<p>Erreur lors de la récupération des suggestions.</p>';
+                });
+        }
+    </script>
+</body>
+</html>
