@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Omnes Immobilier - Votre Compte</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <style>
+  
+    section {
+      padding: 40px 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    footer {
+      background-color: #333;
+      color: white;
+      padding: 20px 10px;
+      text-align: center;
+    }
+    .account-container {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    .form-container, .info-container, .register-container {
+      background-color: #ecf0f1;
+      padding: 20px;
+      margin: 20px;
+      flex: 1 1 45%;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .form-container:hover, .info-container:hover, .register-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .form-container h3, .info-container h3, .register-container h3 {
+      margin-top: 0;
+    }
+    .form-container label, .info-container label, .register-container label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+    .form-container input[type="text"], .form-container input[type="password"], .form-container input[type="email"], .form-container button, .register-container input[type="text"], .register-container input[type="password"], .register-container input[type="email"], .register-container button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #bdc3c7;
+      border-radius: 4px;
+    }
+    .form-container button, .register-container button {
+      background-color: #2c3e50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .form-container button:hover, .register-container button:hover {
+      background-color: #f39c12;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Omnes Immobilier</h1>
+    <nav>
+      <ul>
+        <li><a href="accueil.html">Accueil</a></li>
+        <li><a href="ToutParcourir.html">Tout Parcourir</a></li>
+        <li><a href="recherche.html">Recherche</a></li>
+        <li><a href="rendezvous.html">Rendez-vous</a></li>
+        <li><a href="compte.html">Votre Compte</a></li>
+        <li><a href="messagerie.html">Messagerie</a></li>
+        <a id="userIconLink" href="#"><img id="userIcon" src="images/icone_agent.png" alt="Agent" style="width: 20px; height: 20px; margin-left: 10px;"></a>
+      </ul>
+    </nav>
+  </header>
+  <section id="votre-compte">
+    <h2>Votre Compte</h2>
+    <div class="account-container">
+      <!-- Formulaire de connexion -->
+      <div class="form-container">
+        <h3>Connexion</h3>
+        <form action="login.php" method="POST">
+          <label for="role">Rôle :</label>
+          <select id="role" name="role" required>
+            <option value="1">Administrateur</option>
+            <option value="2">Utilisateur</option>
+            <option value="3">Agent</option>
+          </select>
+          <label for="email">Email :</label>
+          <input type="email" id="email" name="email" required>
+          <label for="password">Mot de passe :</label>
+          <input type="password" id="password" name="password" required>
+          <button type="submit">Se connecter</button>
+        </form>
+      </div>
+      <!-- Formulaire d'inscription -->
+      <div class="register-container">
+        <h3>Créer un compte</h3>
+        <form action="register.php" method="POST">
+          <label for="id">ID :</label>
+<input type="text" id="id" name="id" required>
+          <label for="nom">Nom :</label>
+          <input type="text" id="nom" name="nom" required>
+          <label for="prenom">Prénom :</label>
+          <input type="text" id="prenom" name="prenom" required>
+          <label for="adresse1">Adresse 1 :</label>
+          <input type="text" id="adresse1" name="adresse1" required>
+          <label for="adresse2">Adresse 2 :</label>
+          <input type="text" id="adresse2" name="adresse2" required>
+          <label for="ville">Ville :</label>
+          <input type="text" id="ville" name="ville" required>
+          <label for="code_postal">Code Postal :</label>
+          <input type="number" id="code_postal" name="code_postal" required>
+          <label for="type_payement">Type de Payement :</label>
+          <input type="text" id="type_payement" name="type_payement" required>
+          <label for="numero_carte">Numéro de Carte :</label>
+          <input type="number" id="numero_carte" name="numero_carte" required>
+          <label for="nom_affiche">Nom Affiché :</label>
+          <input type="text" id="nom_affiche" name="nom_affiche" required>
+          <label for="date_expiration">Date d'Expiration :</label>
+          <input type="number" id="date_expiration" name="date_expiration" required>
+          <label for="code_securite">Code de Sécurité :</label>
+          <input type="number" id="code_securite" name="code_securite" required>
+          <label for="pays">Pays :</label>
+          <input type="text" id="pays" name="pays" required>
+          <label for="mail">Email :</label>
+          <input type="email" id="mail" name="mail" required>
+          <label for="mot_de_passe">Mot de passe :</label>
+          <input type="password" id="mot_de_passe" name="mot_de_passe" required>
+          <label for="role">Rôle :</label>
+          <select id="role" name="role" required>
+            <option value="1">Administrateur</option>
+            <option value="2">Utilisateur</option>
+            <option value="3">Agent</option>
+          </select>
+          <button type="submit">S'inscrire</button>
+        </form>
+      </div>
+    </div>
+  </section>
+  <footer>
+    <p>&copy; 2024 Omnes Immobilier. Tous droits réservés.</p>
+  </footer>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    fetch('index.php')
+        .then(response => response.json())
+        .then(data => {
+            const isUserLoggedIn = data.isLoggedIn;
+            const isAdmin = data.isAdmin;
+            const isAgent = data.isAgent;
+            const userIcon = document.getElementById("userIcon");
+            const userIconLink = document.getElementById("userIconLink");
+            if (isUserLoggedIn) {
+                if (isAdmin) {
+                    userIcon.src = "images/icone_admin.png";
+                    userIcon.alt = "Admin";
+                    userIconLink.href = "admin.php";
+                } else if (isAgent) {
+                    userIcon.src = "images/icone_agent.png";
+                    userIcon.alt = "Agent";
+                    userIconLink.href = "agent.php";
+                } else {
+                    userIcon.src = "images/icone_user.png";
+                    userIcon.alt = "Client";
+                    userIconLink.href = "user.php";
+                }
+            }
+        })
+        .catch(error => console.error('Error fetching user data:', error));
+});
+</script>
+</body>
+</html>
